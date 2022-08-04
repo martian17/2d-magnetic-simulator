@@ -22,7 +22,6 @@ class Hooks{
 };
 
 
-//hmm, how should I generalize this hook pattern?
 class ELEM_AddHooks extends ELEM{
     addHooks = new Hooks();
     onAdd(cb){
