@@ -273,7 +273,7 @@ class Simulator extends ResizableCanvas{
         return [cc,255-cc,255-cc];
     }
     spline = null;
-    current = 1;//1 ampare
+    current = 1;//1 ampere
     calculateIntensity(x,y){
         let {spline,current} = this;
         if(!spline)return 0;
