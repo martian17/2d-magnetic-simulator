@@ -1,7 +1,17 @@
-let dist_square = function(a,b){
-    return a*a+b*b;
+let dist_square = function(x,y){
+    return x*x+y*y;
 };
 
+let dist = function(x,y){
+    return Math.sqrt(dist_square(x,y));
+};
+
+let crossProduct3D = function([x1,y1,z1],[x2,y2,z2]){
+    let x = y1*z2 - z1*y2;
+    let y = z1*x2 - x1*z2;
+    let z = x1*y2 - y1*x2;
+    return [x,y,z];
+};
 
 class Hooks{
     hooks = new Map();
@@ -65,6 +75,10 @@ class ResizableCanvas extends ELEM_AddHooks{
         let that = this;
         if(evt === "resize"){
             return this.resizeHooks.add(cb);
+        }else if(evt === "click"){
+            return this.native_on("click",(e)=>{
+                cb(...that.evtToCoords(e));
+            });
         }
         let table = {
             mousemove:"touchmove",
@@ -159,6 +173,9 @@ class Simulator extends ResizableCanvas{
         this.on("resize",()=>{
             this.draw();
         });
+        this.on("click",(px,py)=>{
+            console.log(this.calculateIntensity(...this.pixelToCoord(px,py)));
+        });
         this.draw();
     }
     cx = 0;
@@ -186,7 +203,7 @@ class Simulator extends ResizableCanvas{
         ctx.clearRect(0,0,w,h);
         let imgdata = ctx.getImageData(0,0,w,h);
         let data = imgdata.data;
-        for(let py = 0; py < imgdata.height; py++){
+        /*for(let py = 0; py < imgdata.height; py++){
             for(let px = 0; px < imgdata.width; px++){
                 let [x,y] = this.pixelToCoord(px,py);
                 let [r,g,b] = this.getColor(this.calculateIntensity(x,y));
@@ -196,7 +213,7 @@ class Simulator extends ResizableCanvas{
                 data[idx+2] = b;
                 data[idx+3] = 255;
             }
-        }
+        }*/
         ctx.putImageData(imgdata,0,0);
         
         ctx.beginPath();
@@ -255,31 +272,87 @@ class Simulator extends ResizableCanvas{
         return [cc,255-cc,255-cc];
     }
     spline = null;
+    current = 1;//1 ampare
     calculateIntensity(x,y){
-        let {spline} = this;
+        let {spline,current} = this;
         if(!spline)return 0;
         //if(Math.random() < 0.001)console.log((x+y)*100);
-        return (x+y)/this.virtual_width*100;
-        //do da math
-        //Biot-Savart law
-        //B = μ0/(4π)∫Isinθ/(r^2)dx
+        
+        //dummy return value
+        //return (x+y)/this.virtual_width*100;
+        
+        // do da math
+        // Biot-Savart law
+        // B = μ0/(4π)∫(Idl x r')/(r'^3)
+        
+        //incomplete 3 dimensional code
+        /*
         let xsum = 0;
         let ysum = 0;
-        let mu0 = Math.PI*4*1.0000000;
+        let zsum = 0;
+        let mu0 = Math.PI*4*10000000008220;
         let coef = mu0/(Math.PI*4);
         for(let i = 0; i < spline.length; i++){
-            let [x1,y1] = spline[i];
-            let [x2,y2] = spline[(i+1)%spline.length];
+            
+            let [x1_,y1_] = spline[i];
+            let [x2_,y2_] = spline[(i+1)%spline.length];
+            
+            x1 = x1_ - x;
+            y1 = y1_ - y;
+            x2 = x2_ - x;
+            y2 = y2_ - y;
+            
             let dx = x2-x1;
             let dy = y2-y1;
             
             let xm = (x1+x2)/2;
             let ym = (y1+y2)/2;
             
-            let r = dist_square(xm,ym);
-            //let sintheta = 
+            // Biot-Savart law
+            // Idl x r'
+            let Idl = [current*dx, current*dy, 0];
+            let disp = [xm,ym,0];//displacement
+            
+            let [a,b,c] = crossProduct3D(Idl,disp);
+            
+            let r = dist(xm,ym);
+            let inverse_rcube = 1/(r*r*r);
+            
+            xsum += a*inverse_rcube;
+            ysum += b*inverse_rcube;
+            zsum += c*inverse_rcube;
         }
+        xsum *= coef;
+        ysum *= coef;
+        zsum *= coef;
+        return zsum;
+        */
         
+        //complete 2 dimensional code
+        let zsum = 0;
+        let mu0 = 1.25663706212e-6;
+        let coef = mu0/(Math.PI*4);
+        for(let i = 0; i < spline.length-1; i++){
+            
+            let [x1,y1] = spline[i];
+            let [x2,y2] = spline[(i+1)%spline.length];
+            
+            let rx = x - (x1+x2)/2;
+            let ry = y - (y1+y2)/2;
+            if(i === 0)console.log(rx);
+            
+            let dx = x2-x1;
+            let dy = y2-y1;
+            
+            let r = dist(rx,ry);
+            
+            // Biot-Savart law
+            //only extracting z component
+            //parenthesis: z component of cross product of Idl[] and displacement r'[]
+            zsum += (current*dx*ry - current*dy*rx) / (r*r*r);
+        }
+        zsum *= coef;
+        return zsum;
     }
 }
 
@@ -287,7 +360,39 @@ class Simulator extends ResizableCanvas{
 let main = async function(){
     let body = new ELEM_AddHooks(document.body);
     let simulator = body.add(new Simulator().style("width:100vw;height:70vh"));
-    let r = 6371e+3;//in meters
+    
+    let r = 1;//in meters
+    /*simulator.spline = (()=>{
+        let s = [];
+        let n = 1000;//split into 1000 segments
+        for(let i = 0; i < n; i++){
+            let t = i/n;
+            let rad = 2*Math.PI*t;
+            s.push([Math.cos(rad)*r,Math.sin(rad)*r]);
+        }
+        return s;
+    })();*/
+    
+    simulator.spline = (()=>{
+        let s = [];
+        let len = 10;//meters
+        let n = 1000;//split into 1000 segments
+        for(let i = 0; i < n; i++){
+            s.push([0,i*len/n-5]);
+        }
+        return s;
+    })();
+    //result agrees with theoretical!
+    //2e-7 tesla at 1 meter distance 1 ampare infinitely long straight wire
+    //result
+    //-1.0041782729805013
+    //1.9523041650110676e-7
+    //a little smaller than the expectation because the segment is 10m, instead of infinite length
+    
+    simulator.virtual_width = r*7;
+    simulator.initialize();
+    
+    /*let r = 6371e+3;//in meters
     simulator.spline = (()=>{
         let s = [];
         let n = 1000;//split into 1000 segments
@@ -299,7 +404,7 @@ let main = async function(){
         return s;
     })();
     simulator.virtual_width = r*7;
-    simulator.initialize();
+    simulator.initialize();*/
 };
 
 main();
