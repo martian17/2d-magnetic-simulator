@@ -296,7 +296,6 @@ class Simulator extends ResizableCanvas{
             
             let rx = x - (x1+x2)/2;
             let ry = y - (y1+y2)/2;
-            if(i === 0)console.log(rx);
             
             let dx = x2-x1;
             let dy = y2-y1;
@@ -318,19 +317,9 @@ let main = async function(){
     let body = new ELEM_AddHooks(document.body);
     let simulator = body.add(new Simulator().style("width:100vw;height:70vh"));
     
-    let r = 1;//in meters
-    /*simulator.spline = (()=>{
-        let s = [];
-        let n = 1000;//split into 1000 segments
-        for(let i = 0; i < n; i++){
-            let t = i/n;
-            let rad = 2*Math.PI*t;
-            s.push([Math.cos(rad)*r,Math.sin(rad)*r]);
-        }
-        return s;
-    })();*/
     
-    simulator.spline = (()=>{
+    //defining wire segments
+    let long_wire = (()=>{
         let s = [];
         let len = 10;//meters
         let n = 1000;//split into 1000 segments
@@ -339,29 +328,32 @@ let main = async function(){
         }
         return s;
     })();
-    //result agrees with theoretical!
-    //2e-7 tesla at 1 meter distance 1 ampare infinitely long straight wire
-    //result
-    //-1.0041782729805013
-    //1.9523041650110676e-7
-    //a little smaller than the expectation because the segment is 10m, instead of infinite length
+    //long wire for testing purposes
+    //check if it agrees with theoretical value
+    //at 1 meter and 1 A of current, the field should be 2e-7 tesla
+    //experimental result:
+    //distance: 1.0041782729805013 meter
+    //field strength: 1.9523041650110676e-7 tesla
     
-    simulator.virtual_width = r*7;
-    simulator.initialize();
-    
-    /*let r = 6371e+3;//in meters
-    simulator.spline = (()=>{
+    let createLoop = function(r,n){//r: radius, n: n segments
         let s = [];
-        let n = 1000;//split into 1000 segments
         for(let i = 0; i < n; i++){
             let t = i/n;
             let rad = 2*Math.PI*t;
             s.push([Math.cos(rad)*r,Math.sin(rad)*r]);
         }
+        s.push([...s[0]]);
         return s;
-    })();
+    };
+    
+    let earth_radius = 6371e+3;
+    let r = 1;
+    let loop = createLoop(r,1000);
+    
+    simulator.spline = loop;
+    
     simulator.virtual_width = r*7;
-    simulator.initialize();*/
+    simulator.initialize();
 };
 
 main();
