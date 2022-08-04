@@ -285,50 +285,7 @@ class Simulator extends ResizableCanvas{
         // Biot-Savart law
         // B = μ0/(4π)∫(Idl x r')/(r'^3)
         
-        //incomplete 3 dimensional code
-        /*
-        let xsum = 0;
-        let ysum = 0;
-        let zsum = 0;
-        let mu0 = Math.PI*4*10000000008220;
-        let coef = mu0/(Math.PI*4);
-        for(let i = 0; i < spline.length; i++){
-            
-            let [x1_,y1_] = spline[i];
-            let [x2_,y2_] = spline[(i+1)%spline.length];
-            
-            x1 = x1_ - x;
-            y1 = y1_ - y;
-            x2 = x2_ - x;
-            y2 = y2_ - y;
-            
-            let dx = x2-x1;
-            let dy = y2-y1;
-            
-            let xm = (x1+x2)/2;
-            let ym = (y1+y2)/2;
-            
-            // Biot-Savart law
-            // Idl x r'
-            let Idl = [current*dx, current*dy, 0];
-            let disp = [xm,ym,0];//displacement
-            
-            let [a,b,c] = crossProduct3D(Idl,disp);
-            
-            let r = dist(xm,ym);
-            let inverse_rcube = 1/(r*r*r);
-            
-            xsum += a*inverse_rcube;
-            ysum += b*inverse_rcube;
-            zsum += c*inverse_rcube;
-        }
-        xsum *= coef;
-        ysum *= coef;
-        zsum *= coef;
-        return zsum;
-        */
-        
-        //complete 2 dimensional code
+        //2 dimensional code without xsum and ysum
         let zsum = 0;
         let mu0 = 1.25663706212e-6;
         let coef = mu0/(Math.PI*4);
