@@ -174,7 +174,8 @@ class Simulator extends ResizableCanvas{
             this.draw();
         });
         this.on("click",(px,py)=>{
-            console.log(this.calculateIntensity(...this.pixelToCoord(px,py)));
+            let [x,y] = this.pixelToCoord(px,py);
+            console.log(`x: ${x}, y: ${y} B: ${this.calculateIntensity(x,y)} T`);
         });
         this.draw();
     }
@@ -312,10 +313,11 @@ class Simulator extends ResizableCanvas{
     }
 }
 
+let simulator;
 
 let main = async function(){
     let body = new ELEM_AddHooks(document.body);
-    let simulator = body.add(new Simulator().style("width:100vw;height:70vh"));
+    simulator = body.add(new Simulator().style("width:100vw;height:70vh"));
     
     
     //defining wire segments
@@ -347,10 +349,13 @@ let main = async function(){
     };
     
     let earth_radius = 6371e+3;
+    //let r = earth_radius;
     let r = 1;
     let loop = createLoop(r,1000);
     
-    simulator.spline = loop;
+    //simulator.spline = loop;
+    simulator.spline = long_wire;
+    simulator.current = 304186761.8134461;
     
     simulator.virtual_width = r*7;
     simulator.initialize();
