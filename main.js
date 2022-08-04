@@ -175,7 +175,7 @@ class Simulator extends ResizableCanvas{
         });
         this.on("click",(px,py)=>{
             let [x,y] = this.pixelToCoord(px,py);
-            console.log(`x: ${x}, y: ${y} B: ${this.calculateIntensity(x,y)} T`);
+            console.log(`x: ${x} m, y: ${y} m, B: ${this.calculateIntensity(x,y)} T`);
         });
         this.draw();
     }
